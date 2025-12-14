@@ -11,12 +11,12 @@ TagManager:
   - 
   - Water
   - UI
-  - Background
-  - Walls
-  - ColliderObjects
-  - CollectibleItems
-  - Foreground
-  - Player
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
   - 
   - 
   - 
@@ -42,19 +42,13 @@ TagManager:
     uniqueID: 0
     locked: 0
   - name: Background
-    uniqueID: 797612197
+    uniqueID: 4126410083
+    locked: 0
+  - name: Wall
+    uniqueID: 3586735271
     locked: 0
   - name: Foreground
-    uniqueID: 2218980679
-    locked: 0
-  - name: Player
-    uniqueID: 3783750883
-    locked: 0
-  - name: Enemy
-    uniqueID: 3699371737
-    locked: 0
-  - name: UI
-    uniqueID: 2427230995
+    uniqueID: 3843169019
     locked: 0
   m_RenderingLayers:
   - Default
