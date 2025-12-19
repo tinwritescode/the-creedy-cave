@@ -1,4 +1,5 @@
 using UnityEngine;
+using System;
 
 public class InventoryController : MonoBehaviour
 {
@@ -9,9 +10,13 @@ public class InventoryController : MonoBehaviour
     public int columns = 10;
     public float cellSize = 64f;
     public float spacing = 4f;
-
+    
     private CellController selectedCell;
     private WeaponData[] items;
+
+    [SerializeField] private int coin = 0;
+    public int Coin => coin;
+    public event Action<int> OnCoinChanged;
 
     void Awake()
     {
@@ -76,6 +81,17 @@ public class InventoryController : MonoBehaviour
             }
         }
         return false; // Inventory full
+    }
+
+    /// <summary>
+    /// Inventory giờ có: Slot cho item + Ví tiền cho coin
+    /// Không đụng gì tới grid.
+    /// </summary>
+    /// <param name="amount">The number of coins to add.</param>
+    public void AddCoin(int amount)
+    {
+        coin += amount;
+        OnCoinChanged?.Invoke(coin);
     }
 }
 

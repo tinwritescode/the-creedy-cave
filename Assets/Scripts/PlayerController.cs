@@ -4,7 +4,7 @@ using UnityEngine.InputSystem;
 public class PlayerController : MonoBehaviour
 {
     [SerializeField] private float moveSpeed = 5f;
-    [SerializeField] [Range(0.1f, 1f)] private float colliderSizeScale = 0.8f; // Scale down collider to fit through narrow passages
+    // [SerializeField] [Range(0.1f, 1f)] private float colliderSizeScale = 0.8f; // Scale down collider to fit through narrow passages
     [SerializeField] private float attackRange = 1.5f; // Distance to attack enemies
     [SerializeField] private float attackCooldown = 1.0f; // Time between attacks
     [SerializeField] private string idleAnimationName = "Idle";

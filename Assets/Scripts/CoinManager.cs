@@ -2,25 +2,25 @@ using UnityEngine;
 
 public class CoinManager : MonoBehaviour
 {
-    public int coinCount = 0;
-    
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    public static CoinManager Instance;
+
+    public int coinCount { get; private set; }
+
+    void Awake()
     {
-        
+        Instance = this;
     }
 
-    // Update is called once per frame
-    void Update()
+    public void CollectCoin(int amount = 1)
     {
-        
-    }
+        coinCount += amount;
 
-    /// <summary>
-    /// Called when a coin is collected. Increments the coin count.
-    /// </summary>
-    public void CollectCoin()
-    {
-        coinCount++;
+        // Đẩy coin vào Inventory
+        if (InventoryController.Instance != null)
+        {
+            InventoryController.Instance.AddCoin(amount);
+        }
+
+        Debug.Log($"Coin collected. Total: {coinCount}");
     }
 }
