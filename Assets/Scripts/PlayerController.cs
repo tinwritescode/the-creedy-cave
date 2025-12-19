@@ -74,12 +74,13 @@ public class PlayerController : MonoBehaviour
             boxCollider = gameObject.AddComponent<BoxCollider2D>();
         }
         
+        // cái này làm collider box auto reset, di chuyển của nhân vật sẽ bị vướng tường, không mượt mà khi di chuyển gần tường và qua các khúc cua
         // Adjust collider size to be smaller than sprite for narrow passages
-        if (spriteRenderer != null && spriteRenderer.sprite != null)
-        {
-            Vector2 spriteSize = spriteRenderer.sprite.bounds.size;
-            boxCollider.size = spriteSize * colliderSizeScale;
-        }
+        // if (spriteRenderer != null && spriteRenderer.sprite != null)
+        // {
+        //     Vector2 spriteSize = spriteRenderer.sprite.bounds.size;
+        //     boxCollider.size = spriteSize * colliderSizeScale;
+        // }
 
         // Setup Input System - use project-wide actions if available
         if (InputSystem.actions != null)
@@ -109,6 +110,12 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
+        // Don't process input or movement if player is dead
+        if (playerHealth != null && playerHealth.CurrentHealth <= 0)
+        {
+            return;
+        }
+
         // Handle attack input (J key)
         if (Keyboard.current != null && Keyboard.current.jKey.wasPressedThisFrame)
         {

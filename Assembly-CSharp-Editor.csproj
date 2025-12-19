@@ -50,6 +50,7 @@
   <ItemGroup>
     <Compile Include="Assets\Scripts\Editor\CombatSystemSetupTool.cs" />
     <Compile Include="Assets\Scripts\Editor\HealthBarSetupTool.cs" />
+    <Compile Include="Assets\Scripts\Editor\DebugChasingPlayerTool.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="UnityEngine">

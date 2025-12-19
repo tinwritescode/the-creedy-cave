@@ -13,6 +13,10 @@ PrefabInstance:
       value: Enemy
       objectReference: {fileID: 0}
     - target: {fileID: -2253911629886400664, guid: 5f38baa5d4941469eb1348acd353ab1a, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
+    - target: {fileID: -2253911629886400664, guid: 5f38baa5d4941469eb1348acd353ab1a, type: 3}
       propertyPath: m_TagString
       value: Enemy
       objectReference: {fileID: 0}
@@ -78,10 +82,10 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: -2253911629886400664, guid: 5f38baa5d4941469eb1348acd353ab1a, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 7842995897988204781}
+      addedObject: {fileID: 2257230092232899462}
     - targetCorrespondingSourceObject: {fileID: -2253911629886400664, guid: 5f38baa5d4941469eb1348acd353ab1a, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 2257230092232899462}
+      addedObject: {fileID: 7842995897988204781}
     - targetCorrespondingSourceObject: {fileID: -2253911629886400664, guid: 5f38baa5d4941469eb1348acd353ab1a, type: 3}
       insertIndex: -1
       addedObject: {fileID: 7782467653591197140}
@@ -91,35 +95,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: -2253911629886400664, guid: 5f38baa5d4941469eb1348acd353ab1a, type: 3}
   m_PrefabInstance: {fileID: 3461101922983859971}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &7842995897988204781
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5814202695872938091}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 39023ca07fa63434ea01cc1675fed791, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: '::'
-  detectionRange: 5
-  chaseSpeed: 4
-  attackRange: 1.5
-  attackCooldown: 1.5
-  idleAnimationName: idle
-  walkAnimationName: walk
-  attack01AnimationName: attack01
-  attack02AnimationName: attack02
-  hurtAnimationName: hurt
-  deathAnimationName: Death
-  enableDebugLogs: 1
-  usePathfinding: 1
-  showDebugGizmos: 1
-  showOnScreenDebug: 1
-  showDetailedGizmos: 1
-  toggleDebugKey: 282
-  debugTextOffset: {x: 0, y: 50}
 --- !u!61 &2257230092232899462
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -154,7 +129,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: -0.09375, y: 0.65625}
+  m_Offset: {x: 0.04002309, y: -0.6314481}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.30434778, y: 0.5555555}
@@ -164,8 +139,37 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 0.9375, y: 0.9375}
+  m_Size: {x: 1.114284, y: 0.27846372}
   m_EdgeRadius: 0
+--- !u!114 &7842995897988204781
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5814202695872938091}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 39023ca07fa63434ea01cc1675fed791, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: '::'
+  detectionRange: 5
+  chaseSpeed: 4
+  attackRange: 1.5
+  attackCooldown: 1.5
+  idleAnimationName: idle
+  walkAnimationName: walk
+  attack01AnimationName: attack01
+  attack02AnimationName: attack02
+  hurtAnimationName: hurt
+  deathAnimationName: Death
+  enableDebugLogs: 1
+  usePathfinding: 1
+  showDebugGizmos: 1
+  showOnScreenDebug: 1
+  showDetailedGizmos: 1
+  toggleDebugKey: 282
+  debugTextOffset: {x: 0, y: 50}
 --- !u!114 &7782467653591197140
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -12,6 +12,10 @@ public class PlayerHealth : MonoBehaviour
     public float CurrentHealth => currentHealth;
     public float MaxHealth => maxHealth;
     public float AttackDamage => attackDamage;
+    private bool isDead = false;
+    public bool IsDead => isDead;
+    public event Action OnDeath;
+
     
     void Start()
     {
@@ -21,6 +25,8 @@ public class PlayerHealth : MonoBehaviour
     
     public void TakeDamage(float damage)
     {
+        if (isDead) return;
+
         currentHealth = Mathf.Max(0, currentHealth - damage);
         OnHealthChanged?.Invoke(currentHealth, maxHealth);
         
@@ -30,20 +36,24 @@ public class PlayerHealth : MonoBehaviour
         }
     }
     
+    // trừ nửa ống máu hiện tại
     public void TakeHalfDamage()
     {
-        TakeDamage(0.5f);
+        TakeDamage(currentHealth * 0.5f);
     }
+
     
     public void Heal(float amount)
     {
+        if (isDead) return;
+        
         currentHealth = Mathf.Min(maxHealth, currentHealth + amount);
         OnHealthChanged?.Invoke(currentHealth, maxHealth);
     }
     
     public void HealHalf()
     {
-        Heal(0.5f);
+        Heal(maxHealth * 0.5f); // heal nửa ống máu tối đa
     }
     
     public void SetMaxHealth(float newMaxHealth)
@@ -55,8 +65,12 @@ public class PlayerHealth : MonoBehaviour
     
     private void Die()
     {
+        if (isDead) return;
+        isDead = true;
+
         Debug.Log("Player died!");
-        // Add death logic here (restart, game over, etc.)
+        
+        OnDeath?.Invoke();
     }
 }
 
