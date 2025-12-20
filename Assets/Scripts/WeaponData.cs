@@ -9,4 +9,3 @@ public class WeaponData : ScriptableObject
     public float attackSpeed;
 }
 
-

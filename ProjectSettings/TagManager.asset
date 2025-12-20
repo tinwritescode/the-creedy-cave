@@ -3,9 +3,7 @@
 --- !u!78 &1
 TagManager:
   serializedVersion: 3
-  tags:
-  - Coin
-  - Enemy
+  tags: []
   layers:
   - Default
   - TransparentFX
@@ -13,7 +11,7 @@ TagManager:
   - 
   - Water
   - UI
-  - Player
+  - 
   - 
   - 
   - 
@@ -51,9 +49,6 @@ TagManager:
     locked: 0
   - name: Foreground
     uniqueID: 3843169019
-    locked: 0
-  - name: Coin
-    uniqueID: 949645125
     locked: 0
   - name: Player
     uniqueID: 3133442601
