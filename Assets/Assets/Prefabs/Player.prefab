@@ -11,10 +11,11 @@ GameObject:
   - component: {fileID: 4587264861806702181}
   - component: {fileID: 8652822381341977455}
   - component: {fileID: 1065075997767733953}
-  - component: {fileID: 5330120156060980489}
   - component: {fileID: 79863915953326774}
-  - component: {fileID: 855453171745920447}
   - component: {fileID: 2000776154364024316}
+  - component: {fileID: 5330120156060980489}
+  - component: {fileID: 855453171745920447}
+  - component: {fileID: 2158877061818829736}
   m_Layer: 6
   m_Name: Player
   m_TagString: Player
@@ -117,26 +118,6 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!114 &5330120156060980489
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8200346396900512160}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 84bb8be9f0c5d468286c018c6662607e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: '::'
-  moveSpeed: 5
-  attackRange: 1.5
-  attackCooldown: 1
-  idleAnimationName: Idle
-  walkAnimationName: Walk
-  attack01AnimationName: Attack01
-  hurtAnimationName: Hurt
-  coinManager: {fileID: 0}
 --- !u!61 &79863915953326774
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -183,21 +164,6 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 1.3441589, y: 0.365309}
   m_EdgeRadius: 0
---- !u!114 &855453171745920447
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8200346396900512160}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dd5ae2dcdb44e4bcdbba813e5f450f50, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerHealth
-  maxHealth: 2000
-  currentHealth: 0
-  attackDamage: 150
 --- !u!50 &2000776154364024316
 Rigidbody2D:
   serializedVersion: 5
@@ -225,3 +191,50 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 1
   m_Constraints: 4
+--- !u!114 &5330120156060980489
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8200346396900512160}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 84bb8be9f0c5d468286c018c6662607e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: '::'
+  moveSpeed: 5
+  attackRange: 1.5
+  attackCooldown: 1
+  idleAnimationName: Idle
+  walkAnimationName: Walk
+  attack01AnimationName: Attack01
+  hurtAnimationName: Hurt
+  coinManager: {fileID: 0}
+--- !u!114 &855453171745920447
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8200346396900512160}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dd5ae2dcdb44e4bcdbba813e5f450f50, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerHealth
+  maxHealth: 2000
+  currentHealth: 0
+  attackDamage: 300
+--- !u!114 &2158877061818829736
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8200346396900512160}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a89abbb67966dce4d95c12f845c4c43f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: '::'

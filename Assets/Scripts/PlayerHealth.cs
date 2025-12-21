@@ -4,7 +4,6 @@ using System;
 public class PlayerHealth : MonoBehaviour
 {
     [SerializeField] private float maxHealth = 2000f;
-    [SerializeField] private float currentHealth;
     [SerializeField] private float attackDamage = 150f;
     
     public event Action<float, float> OnHealthChanged; // currentHealth, maxHealth
@@ -13,6 +12,9 @@ public class PlayerHealth : MonoBehaviour
     public float CurrentHealth => currentHealth;
     public float MaxHealth => maxHealth;
     public float AttackDamage => attackDamage;
+    
+    private float currentHealth;
+    private bool isDead = false;
     
     void Start()
     {
@@ -86,8 +88,31 @@ public class PlayerHealth : MonoBehaviour
     
     private void Die()
     {
+        if (isDead) return; // Tránh gọi nhiều lần
+        
+        isDead = true;
         Debug.Log("Player died!");
-        // Add death logic here (restart, game over, etc.)
+        
+        // Gọi PlayerDeath để xử lý death sequence
+        PlayerDeath playerDeath = GetComponent<PlayerDeath>();
+        if (playerDeath != null)
+        {
+            playerDeath.HandleDeath();
+        }
+        else
+        {
+            Debug.LogWarning("PlayerHealth: Không tìm thấy PlayerDeath component! Vui lòng thêm PlayerDeath vào player GameObject.");
+        }
+    }
+    
+    /// <summary>
+    /// Reset death state (dùng khi restart)
+    /// </summary>
+    public void ResetDeath()
+    {
+        isDead = false;
+        currentHealth = maxHealth;
+        OnHealthChanged?.Invoke(currentHealth, maxHealth);
     }
 }
 

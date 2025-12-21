@@ -1,0 +1,28 @@
+[33m2119722[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31mupstream/main[m[33m, [m[1;31mupstream/HEAD[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Merge pull request #8 from eugen13579/bao/draw_wall_lv1
+[33m5be6d78[m Merge branch 'main' into bao/draw_wall_lv1
+[33me14fc61[m Merge pull request #9 from liltommy142/main
+[33mca5e2d0[m Merge branch 'main' of https://github.com/liltommy142/the-creedy-cave
+[33ma1455f8[m add more coins
+[33ma5b4445[m init menu
+[33mdad3e13[m Merge pull request #7 from liltommy142/main
+[33m4cbe91b[m adjust player's ColliderBox
+[33m4ceb5d1[m create more enemy
+[33m1bf807d[m[33m ([m[1;32mrescue[m[33m)[m add healthbar, item drop
+[33m3ed0a41[m update combat system
+[33m20a78d0[m Merge pull request #5 from liltommy142/main
+[33m258bfa1[m create CoinAnim, Coin Prefab, Coin Manager, and CountCoin Features... (Dungeon1 Scence)
+[33md63d30e[m update inventory
+[33mc8f1c07[m Merge pull request #4 from eugen13579/bao/draw_wall_lv1
+[33me267e56[m add background
+[33m8f763a7[m deco
+[33mb714f76[m Merge pull request #3 from tinwritescode/feat/level2
+[33mb1563ac[m[33m ([m[1;31mupstream/feat/level2[m[33m)[m Merge remote-tracking branch 'origin3/main' into feat/level2
+[33mc166520[m Re-assign the ground tiles from "Wall" to "Background"
+[33m2cac370[m Merge branch 'main' into feat/level2
+[33mb0baca1[m Merge pull request #1 from eugen13579/bao/draw_wall_lv1
+[33m01569d3[m Merge branch 'main' into bao/draw_wall_lv1
+[33m54a93b1[m Dungeon2 init
+[33m1a1a4d3[m vẽ wall lv1
+[33m4748bef[m add player combat beta
+[33md2a4340[m make player moveable and add health bar
+[33m7ef096c[m initial commit
