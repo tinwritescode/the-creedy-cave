@@ -34,24 +34,41 @@ public class PlayerDeath : MonoBehaviour
     /// </summary>
     public void HandleDeath()
     {
-        if (isDead) return; // Tránh gọi nhiều lần
+        if (isDead)
+        {
+            Debug.LogWarning("[PlayerDeath] HandleDeath() đã được gọi rồi, bỏ qua...");
+            return;
+        }
         
         isDead = true;
+        Debug.Log("[PlayerDeath] Player đã chết, bắt đầu death sequence");
         
-        // Vô hiệu hóa player controller TRƯỚC để tránh override animation
+        // Vô hiệu hóa player
+        DisablePlayer();
+        
+        // Play death animation
+        PlayDeathAnimation();
+        
+        // Bắt đầu death sequence
+        deathSequenceCoroutine = StartCoroutine(DeathSequence());
+    }
+    
+    /// <summary>
+    /// Vô hiệu hóa player (controller, physics, colliders)
+    /// </summary>
+    private void DisablePlayer()
+    {
         if (playerController != null)
         {
             playerController.enabled = false;
         }
         
-        // Dừng movement
         if (rb != null)
         {
             rb.linearVelocity = Vector2.zero;
-            rb.simulated = false; // Tắt physics simulation
+            rb.simulated = false;
         }
         
-        // Vô hiệu hóa colliders
         foreach (Collider2D col in colliders)
         {
             if (col != null)
@@ -59,46 +76,53 @@ public class PlayerDeath : MonoBehaviour
                 col.enabled = false;
             }
         }
-        
-        // Play death animation - dùng Play() để chắc chắn animation chạy
-        if (animator != null)
-        {
-            if (!string.IsNullOrEmpty(deathStateName))
-            {
-                // Dùng Play() để chắc chắn animation chạy
-                animator.Play(deathStateName, 0, 0f);
-                Debug.Log($"[PlayerDeath] Playing death animation: {deathStateName}");
-            }
-            else
-            {
-                Debug.LogWarning("[PlayerDeath] Không có death state name được thiết lập!");
-            }
-        }
-        else
-        {
-            Debug.LogWarning("[PlayerDeath] Animator không tìm thấy!");
-        }
-        
-        // Bắt đầu death sequence
-        deathSequenceCoroutine = StartCoroutine(DeathSequence());
     }
     
     /// <summary>
-    /// Death sequence: chờ animation xong rồi mới pause game và hiện death screen
+    /// Play death animation
+    /// </summary>
+    private void PlayDeathAnimation()
+    {
+        if (animator == null)
+        {
+            Debug.LogWarning("[PlayerDeath] Animator không tìm thấy!");
+            return;
+        }
+        
+        if (string.IsNullOrEmpty(deathStateName))
+        {
+            Debug.LogWarning("[PlayerDeath] Không có death state name được thiết lập!");
+            return;
+        }
+        
+        animator.Play(deathStateName, 0, 0f);
+        Debug.Log($"[PlayerDeath] Playing death animation: {deathStateName}");
+    }
+    
+    /// <summary>
+    /// Death sequence: chờ animation xong rồi load death scene
     /// </summary>
     private IEnumerator DeathSequence()
     {
         // Chờ animation death hoàn thành
         yield return StartCoroutine(WaitForDeathAnimation());
         
-        // Sau khi animation xong, hiển thị death screen (sẽ pause game)
+        // Sau khi animation xong, hiển thị death screen
+        ShowDeathScreen();
+    }
+    
+    /// <summary>
+    /// Hiển thị death screen thông qua DeathManager
+    /// </summary>
+    private void ShowDeathScreen()
+    {
         if (DeathManager.Instance != null)
         {
             DeathManager.Instance.ShowDeathScreen();
         }
         else
         {
-            Debug.LogError("DeathManager.Instance is null! Vui lòng đảm bảo DeathManager đã được thêm vào scene.");
+            Debug.LogError("[PlayerDeath] DeathManager.Instance is null! Vui lòng đảm bảo DeathManager đã được thêm vào scene.");
         }
     }
     
@@ -107,55 +131,43 @@ public class PlayerDeath : MonoBehaviour
     /// </summary>
     private IEnumerator WaitForDeathAnimation()
     {
-        if (animator == null)
+        if (animator == null || string.IsNullOrEmpty(deathStateName))
         {
-            Debug.LogWarning("[PlayerDeath] Animator null, dùng fallback delay");
+            Debug.LogWarning("[PlayerDeath] Animator hoặc death state name null, dùng fallback delay");
             yield return new WaitForSeconds(fallbackDelay);
             yield break;
         }
         
-        // Tìm layer chứa death animation (thường là layer 0)
-        int layerIndex = 0;
+        const int layerIndex = 0;
+        const float maxWaitTime = 1f;
+        float waitTime = 0f;
         
-        // Nếu có state name, chờ animation đó chạy xong
-        if (!string.IsNullOrEmpty(deathStateName))
+        // Chờ animation state được kích hoạt
+        AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(layerIndex);
+        while (!stateInfo.IsName(deathStateName) && waitTime < maxWaitTime)
         {
-            // Chờ cho đến khi animation state được kích hoạt
-            float waitTime = 0f;
-            AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(layerIndex);
-            
-            while (!stateInfo.IsName(deathStateName) && waitTime < 1f)
-            {
-                waitTime += Time.deltaTime;
-                stateInfo = animator.GetCurrentAnimatorStateInfo(layerIndex);
-                yield return null;
-            }
-            
-            if (!stateInfo.IsName(deathStateName))
-            {
-                Debug.LogWarning($"[PlayerDeath] Không tìm thấy animation state '{deathStateName}' sau 1 giây, dùng fallback delay");
-                yield return new WaitForSeconds(fallbackDelay);
-                yield break;
-            }
-            
-            // Chờ animation chạy xong (normalizedTime >= 1)
+            waitTime += Time.deltaTime;
             stateInfo = animator.GetCurrentAnimatorStateInfo(layerIndex);
-            while (stateInfo.IsName(deathStateName) && stateInfo.normalizedTime < 1f)
-            {
-                stateInfo = animator.GetCurrentAnimatorStateInfo(layerIndex);
-                yield return null;
-            }
-            
-            Debug.Log($"[PlayerDeath] Death animation đã hoàn thành (normalizedTime: {stateInfo.normalizedTime})");
-        }
-        else
-        {
-            // Nếu không có state name, dùng fallback delay
-            Debug.LogWarning("[PlayerDeath] Không có death state name, dùng fallback delay");
-            yield return new WaitForSeconds(fallbackDelay);
+            yield return null;
         }
         
-        // Thêm một chút delay nhỏ để đảm bảo animation đã hoàn toàn kết thúc
+        if (!stateInfo.IsName(deathStateName))
+        {
+            Debug.LogWarning($"[PlayerDeath] Không tìm thấy animation state '{deathStateName}' sau {maxWaitTime} giây, dùng fallback delay");
+            yield return new WaitForSeconds(fallbackDelay);
+            yield break;
+        }
+        
+        // Chờ animation chạy xong (normalizedTime >= 1)
+        while (stateInfo.normalizedTime < 1f)
+        {
+            stateInfo = animator.GetCurrentAnimatorStateInfo(layerIndex);
+            yield return null;
+        }
+        
+        Debug.Log($"[PlayerDeath] Death animation đã hoàn thành (normalizedTime: {stateInfo.normalizedTime})");
+        
+        // Delay nhỏ để đảm bảo animation hoàn toàn kết thúc
         yield return new WaitForSeconds(0.1f);
     }
     
@@ -182,6 +194,15 @@ public class PlayerDeath : MonoBehaviour
             deathSequenceCoroutine = null;
         }
         
+        // Kích hoạt lại player
+        EnablePlayer();
+    }
+    
+    /// <summary>
+    /// Kích hoạt lại player (controller, physics, colliders)
+    /// </summary>
+    private void EnablePlayer()
+    {
         if (rb != null)
         {
             rb.simulated = true;
