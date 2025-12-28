@@ -6464,7 +6464,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeathManager
   deathSceneName: DeathScene
-  deathSceneName: DeathScene
   pauseGameOnDeath: 1
   mainMenuSceneName: Menu
   allowRestart: 1
