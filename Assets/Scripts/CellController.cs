@@ -7,7 +7,7 @@ public class CellController : MonoBehaviour, IPointerEnterHandler, IPointerExitH
     public bool selected = false;
     public GameObject highlight;
     public Image itemIcon;
-    public WeaponData currentItem;
+    public ItemData currentItem;
     private Animator animator;
 
     void Start()
@@ -42,12 +42,12 @@ public class CellController : MonoBehaviour, IPointerEnterHandler, IPointerExitH
         InventoryController.Instance.SelectCell(this);
     }
 
-    public void SetItem(WeaponData weapon)
+    public void SetItem(ItemData item)
     {
-        currentItem = weapon;
-        if (itemIcon != null && weapon != null)
+        currentItem = item;
+        if (itemIcon != null && item != null)
         {
-            itemIcon.sprite = weapon.icon;
+            itemIcon.sprite = item.icon;
             itemIcon.color = Color.white;
             itemIcon.enabled = true;
         }

@@ -556,7 +556,7 @@ public class PlayerController : MonoBehaviour
         if (weaponCell != null && weaponCell.currentItem != null)
         {
             // Check if equipped weapon is the bow (by name)
-            return weaponCell.currentItem.weaponName == "Bow";
+            return weaponCell.currentItem.itemName == "Bow";
         }
         
         return false;

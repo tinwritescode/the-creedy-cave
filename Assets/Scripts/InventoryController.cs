@@ -11,17 +11,32 @@ public class InventoryController : MonoBehaviour
     public float cellSize = 64f;
     public float spacing = 4f;
     
-    [Header("Weapon Equipment")]
+    [Header("Equipment Slots")]
     [Tooltip("Weapon Cell GameObject (should have CellController component, like inventory cells)")]
     public GameObject weaponCellGameObject;
+    [Tooltip("Armor Cell GameObject (should have CellController component)")]
+    public GameObject armorCellGameObject;
+    [Tooltip("Hat Cell GameObject (should have CellController component)")]
+    public GameObject hatCellGameObject;
+    [Tooltip("Gloves Cell GameObject (should have CellController component)")]
+    public GameObject glovesCellGameObject;
+    [Tooltip("Shoes Cell GameObject (should have CellController component)")]
+    public GameObject shoesCellGameObject;
     [Tooltip("Use button GameObject (will get Button component from this)")]
     public GameObject useButtonGameObject;
+    [Tooltip("Drop button GameObject (will get Button component from this)")]
+    public GameObject dropButtonGameObject;
     
     private CellController weaponCell;
+    private CellController armorCell;
+    private CellController hatCell;
+    private CellController glovesCell;
+    private CellController shoesCell;
     private Button useButton;
+    private Button dropButton;
 
     private CellController selectedCell;
-    private WeaponData[] items;
+    private ItemData[] items;
     
     // Public property to access weapon cell
     public CellController WeaponCell => weaponCell;
@@ -29,7 +44,7 @@ public class InventoryController : MonoBehaviour
     void Awake()
     {
         Instance = this;
-        items = new WeaponData[rows * columns];
+        items = new ItemData[rows * columns];
         GenerateGrid();
         
         // Get CellController component from weaponCellGameObject (same as inventory cells)
@@ -64,6 +79,78 @@ public class InventoryController : MonoBehaviour
             if (weaponCell == null)
             {
                 Debug.LogWarning("WeaponCell not found. Please drag a Cell GameObject (with CellController component) from the scene into the 'weaponCellGameObject' field.");
+            }
+        }
+        
+        // Initialize armor cell
+        if (armorCellGameObject != null)
+        {
+            armorCell = armorCellGameObject.GetComponent<CellController>();
+            if (armorCell == null)
+            {
+                Debug.LogWarning($"[InventoryController] armorCellGameObject '{armorCellGameObject.name}' does not have a CellController component!");
+            }
+        }
+        else
+        {
+            GameObject armorCellObj = GameObject.Find("ArmorCell");
+            if (armorCellObj != null)
+            {
+                armorCell = armorCellObj.GetComponent<CellController>();
+            }
+        }
+        
+        // Initialize hat cell
+        if (hatCellGameObject != null)
+        {
+            hatCell = hatCellGameObject.GetComponent<CellController>();
+            if (hatCell == null)
+            {
+                Debug.LogWarning($"[InventoryController] hatCellGameObject '{hatCellGameObject.name}' does not have a CellController component!");
+            }
+        }
+        else
+        {
+            GameObject hatCellObj = GameObject.Find("HatCell");
+            if (hatCellObj != null)
+            {
+                hatCell = hatCellObj.GetComponent<CellController>();
+            }
+        }
+        
+        // Initialize gloves cell
+        if (glovesCellGameObject != null)
+        {
+            glovesCell = glovesCellGameObject.GetComponent<CellController>();
+            if (glovesCell == null)
+            {
+                Debug.LogWarning($"[InventoryController] glovesCellGameObject '{glovesCellGameObject.name}' does not have a CellController component!");
+            }
+        }
+        else
+        {
+            GameObject glovesCellObj = GameObject.Find("GlovesCell");
+            if (glovesCellObj != null)
+            {
+                glovesCell = glovesCellObj.GetComponent<CellController>();
+            }
+        }
+        
+        // Initialize shoes cell
+        if (shoesCellGameObject != null)
+        {
+            shoesCell = shoesCellGameObject.GetComponent<CellController>();
+            if (shoesCell == null)
+            {
+                Debug.LogWarning($"[InventoryController] shoesCellGameObject '{shoesCellGameObject.name}' does not have a CellController component!");
+            }
+        }
+        else
+        {
+            GameObject shoesCellObj = GameObject.Find("ShoesCell");
+            if (shoesCellObj != null)
+            {
+                shoesCell = shoesCellObj.GetComponent<CellController>();
             }
         }
         
@@ -106,6 +193,46 @@ public class InventoryController : MonoBehaviour
             useButton.onClick.AddListener(OnUseButtonClicked);
             UpdateUseButtonState();
         }
+        
+        // Get Button component from dropButtonGameObject
+        if (dropButtonGameObject != null)
+        {
+            dropButton = dropButtonGameObject.GetComponent<Button>();
+            if (dropButton != null)
+            {
+                Debug.Log($"Found Drop button from dropButtonGameObject: {dropButtonGameObject.name}");
+            }
+            else
+            {
+                Debug.LogWarning($"dropButtonGameObject '{dropButtonGameObject.name}' does not have a Button component!");
+            }
+        }
+        else
+        {
+            // Auto-find as fallback
+            Button[] buttons = GetComponentsInChildren<Button>();
+            foreach (Button btn in buttons)
+            {
+                if (btn.name.ToLower().Contains("drop"))
+                {
+                    dropButton = btn;
+                    Debug.Log($"Auto-found Drop button in children: {btn.name}");
+                    break;
+                }
+            }
+            
+            if (dropButton == null)
+            {
+                Debug.LogWarning("Drop button not found. Please drag the Drop button GameObject from the scene into the 'dropButtonGameObject' field.");
+            }
+        }
+        
+        // Setup Drop button
+        if (dropButton != null)
+        {
+            dropButton.onClick.AddListener(OnDropButtonClicked);
+            UpdateDropButtonState();
+        }
     }
 
     void GenerateGrid()
@@ -142,8 +269,9 @@ public class InventoryController : MonoBehaviour
         selectedCell = cell;
         selectedCell.SetHighlight(true);
         
-        // Update Use button state when selection changes
+        // Update Use and Drop button states when selection changes
         UpdateUseButtonState();
+        UpdateDropButtonState();
     }
 
     public void DeselectCell()
@@ -152,8 +280,9 @@ public class InventoryController : MonoBehaviour
             selectedCell.SetHighlight(false);
         selectedCell = null;
         
-        // Update Use button state when deselected
+        // Update Use and Drop button states when deselected
         UpdateUseButtonState();
+        UpdateDropButtonState();
     }
 
     public void CloseInventory()
@@ -163,11 +292,11 @@ public class InventoryController : MonoBehaviour
         gameObject.SetActive(false);
     }
 
-    public bool AddItem(WeaponData weapon)
+    public bool AddItem(ItemData item)
     {
-        if (weapon == null)
+        if (item == null)
         {
-            Debug.LogWarning("InventoryController: Cannot add null weapon!");
+            Debug.LogWarning("InventoryController: Cannot add null item!");
             return false;
         }
         
@@ -183,13 +312,13 @@ public class InventoryController : MonoBehaviour
             if (gridContainer.childCount == 0)
             {
                 Debug.LogWarning("InventoryController: Grid not generated yet. Generating now...");
-                items = new WeaponData[rows * columns];
+                items = new ItemData[rows * columns];
                 GenerateGrid();
             }
             else
             {
                 // Grid exists but items array wasn't initialized
-                items = new WeaponData[rows * columns];
+                items = new ItemData[rows * columns];
             }
         }
         
@@ -197,7 +326,7 @@ public class InventoryController : MonoBehaviour
         {
             if (items[i] == null)
             {
-                items[i] = weapon;
+                items[i] = item;
                 
                 // Check if cell exists
                 if (i < gridContainer.childCount)
@@ -205,7 +334,7 @@ public class InventoryController : MonoBehaviour
                     var cell = gridContainer.GetChild(i).GetComponent<CellController>();
                     if (cell != null)
                     {
-                        cell.SetItem(weapon);
+                        cell.SetItem(item);
                         return true;
                     }
                     else
@@ -233,20 +362,136 @@ public class InventoryController : MonoBehaviour
     {
         if (selectedCell == null || selectedCell.currentItem == null)
         {
-            Debug.LogWarning("No weapon selected to equip!");
+            Debug.LogWarning("No item selected to equip!");
             return;
         }
         
-        WeaponData itemToUse = selectedCell.currentItem;
+        ItemData itemToUse = selectedCell.currentItem;
         
-        // Check if this is a health flask
-        if (itemToUse.weaponName == "Health Flask")
+        // Handle consumable items (like health flasks)
+        if (itemToUse.itemType == ItemData.ItemType.Consumable)
         {
-            UseHealthFlask(itemToUse);
+            // Check if this is a health flask
+            if (itemToUse.itemName == "Health Flask")
+            {
+                UseHealthFlask(itemToUse);
+                return;
+            }
+            // Add other consumable types here in the future
+            Debug.LogWarning($"Unknown consumable item: {itemToUse.itemName}");
             return;
         }
         
-        // Otherwise, equip as weapon
+        // Route item to correct equipment slot based on item type
+        CellController targetCell = null;
+        
+        switch (itemToUse.itemType)
+        {
+            case ItemData.ItemType.Weapon:
+                targetCell = weaponCell;
+                break;
+            case ItemData.ItemType.Armor:
+                targetCell = armorCell;
+                break;
+            case ItemData.ItemType.Hat:
+                targetCell = hatCell;
+                break;
+            case ItemData.ItemType.Gloves:
+                targetCell = glovesCell;
+                break;
+            case ItemData.ItemType.Shoes:
+                targetCell = shoesCell;
+                break;
+            default:
+                Debug.LogWarning($"Cannot equip item type: {itemToUse.itemType}");
+                return;
+        }
+        
+        if (targetCell == null)
+        {
+            // Try to get cell if it's null (in case it wasn't set in Awake)
+            switch (itemToUse.itemType)
+            {
+                case ItemData.ItemType.Weapon:
+                    if (weaponCellGameObject != null)
+                    {
+                        targetCell = weaponCellGameObject.GetComponent<CellController>();
+                    }
+                    else
+                    {
+                        GameObject weaponCellObj = GameObject.Find("WeaponCell");
+                        if (weaponCellObj != null)
+                        {
+                            targetCell = weaponCellObj.GetComponent<CellController>();
+                        }
+                    }
+                    break;
+                case ItemData.ItemType.Armor:
+                    if (armorCellGameObject != null)
+                    {
+                        targetCell = armorCellGameObject.GetComponent<CellController>();
+                    }
+                    else
+                    {
+                        GameObject armorCellObj = GameObject.Find("ArmorCell");
+                        if (armorCellObj != null)
+                        {
+                            targetCell = armorCellObj.GetComponent<CellController>();
+                        }
+                    }
+                    break;
+                case ItemData.ItemType.Hat:
+                    if (hatCellGameObject != null)
+                    {
+                        targetCell = hatCellGameObject.GetComponent<CellController>();
+                    }
+                    else
+                    {
+                        GameObject hatCellObj = GameObject.Find("HatCell");
+                        if (hatCellObj != null)
+                        {
+                            targetCell = hatCellObj.GetComponent<CellController>();
+                        }
+                    }
+                    break;
+                case ItemData.ItemType.Gloves:
+                    if (glovesCellGameObject != null)
+                    {
+                        targetCell = glovesCellGameObject.GetComponent<CellController>();
+                    }
+                    else
+                    {
+                        GameObject glovesCellObj = GameObject.Find("GlovesCell");
+                        if (glovesCellObj != null)
+                        {
+                            targetCell = glovesCellObj.GetComponent<CellController>();
+                        }
+                    }
+                    break;
+                case ItemData.ItemType.Shoes:
+                    if (shoesCellGameObject != null)
+                    {
+                        targetCell = shoesCellGameObject.GetComponent<CellController>();
+                    }
+                    else
+                    {
+                        GameObject shoesCellObj = GameObject.Find("ShoesCell");
+                        if (shoesCellObj != null)
+                        {
+                            targetCell = shoesCellObj.GetComponent<CellController>();
+                        }
+                    }
+                    break;
+            }
+            
+            if (targetCell == null)
+            {
+                Debug.LogError($"Equipment cell for {itemToUse.itemType} is not assigned! Please assign the cell GameObject in the Inspector.");
+                return;
+            }
+        }
+        
+        // Equip the item to the appropriate slot
         // Try to get weaponCell if it's null (in case it wasn't set in Awake)
         if (weaponCell == null)
         {
@@ -278,26 +523,35 @@ public class InventoryController : MonoBehaviour
             }
         }
         
-        // Equip the weapon (using SetItem like inventory cells)
-        weaponCell.SetItem(itemToUse);
+        // Equip the item (using SetItem like inventory cells)
+        targetCell.SetItem(itemToUse);
         
         // Update player stats if PlayerHealth exists
         PlayerHealth playerHealth = FindFirstObjectByType<PlayerHealth>();
         if (playerHealth != null)
         {
-            // Update player attack damage based on weapon
-            // Note: This assumes PlayerHealth has a method to set attack damage
-            // If not, we may need to add it or use a different approach
-            UpdatePlayerWeaponStats(playerHealth, itemToUse);
+            // Update player stats based on item type
+            if (itemToUse.itemType == ItemData.ItemType.Weapon)
+            {
+                UpdatePlayerWeaponStats(playerHealth, itemToUse);
+            }
+            // TODO: Add defense stat updates for armor items
+            // else if (itemToUse.itemType == ItemData.ItemType.Armor || 
+            //          itemToUse.itemType == ItemData.ItemType.Hat ||
+            //          itemToUse.itemType == ItemData.ItemType.Gloves ||
+            //          itemToUse.itemType == ItemData.ItemType.Shoes)
+            // {
+            //     UpdatePlayerDefenseStats(playerHealth, itemToUse);
+            // }
         }
         
-        Debug.Log($"Equipped weapon: {itemToUse.weaponName}");
+        Debug.Log($"Equipped {itemToUse.itemType}: {itemToUse.itemName}");
     }
     
     /// <summary>
     /// Uses a health flask: heals the player, shows message, and removes flask from inventory.
     /// </summary>
-    private void UseHealthFlask(WeaponData flaskData)
+    private void UseHealthFlask(ItemData flaskData)
     {
         const float healAmount = 500f; // Default heal amount for health flask
         
@@ -362,12 +616,12 @@ public class InventoryController : MonoBehaviour
     /// <summary>
     /// Updates the player's weapon stats based on the equipped weapon.
     /// </summary>
-    private void UpdatePlayerWeaponStats(PlayerHealth playerHealth, WeaponData weapon)
+    private void UpdatePlayerWeaponStats(PlayerHealth playerHealth, ItemData weapon)
     {
         if (playerHealth != null && weapon != null)
         {
             playerHealth.SetAttackDamage(weapon.damage);
-            Debug.Log($"Updated player attack damage to {weapon.damage} from weapon {weapon.weaponName}");
+            Debug.Log($"Updated player attack damage to {weapon.damage} from weapon {weapon.itemName}");
         }
     }
     
@@ -384,13 +638,50 @@ public class InventoryController : MonoBehaviour
     }
     
     /// <summary>
-    /// Gets all items in the inventory with their indices.
-    /// Returns a list of tuples containing (index, WeaponData).
+    /// Updates the Drop button's interactable state based on selection.
     /// </summary>
-    public System.Collections.Generic.List<System.Tuple<int, WeaponData>> GetAllItems()
+    private void UpdateDropButtonState()
     {
-        System.Collections.Generic.List<System.Tuple<int, WeaponData>> itemList = 
-            new System.Collections.Generic.List<System.Tuple<int, WeaponData>>();
+        if (dropButton == null) return;
+        
+        // Enable button only if a weapon is selected
+        bool hasSelectedWeapon = selectedCell != null && selectedCell.currentItem != null;
+        dropButton.interactable = hasSelectedWeapon;
+    }
+    
+    /// <summary>
+    /// Called when the Drop button is clicked.
+    /// Drops the selected item from inventory (item disappears forever).
+    /// </summary>
+    public void OnDropButtonClicked()
+    {
+        if (selectedCell == null || selectedCell.currentItem == null)
+        {
+            Debug.LogWarning("No item selected to drop!");
+            return;
+        }
+        
+        ItemData itemToDrop = selectedCell.currentItem;
+        
+        // Remove item from inventory (item disappears forever, not spawned as pickupable)
+        if (RemoveItem(itemToDrop))
+        {
+            Debug.Log($"Dropped item: {itemToDrop.itemName} (removed from inventory)");
+        }
+        else
+        {
+            Debug.LogWarning($"Failed to remove item {itemToDrop.itemName} from inventory!");
+        }
+    }
+    
+    /// <summary>
+    /// Gets all items in the inventory with their indices.
+    /// Returns a list of tuples containing (index, ItemData).
+    /// </summary>
+    public System.Collections.Generic.List<System.Tuple<int, ItemData>> GetAllItems()
+    {
+        System.Collections.Generic.List<System.Tuple<int, ItemData>> itemList = 
+            new System.Collections.Generic.List<System.Tuple<int, ItemData>>();
         
         if (items == null) return itemList;
         
@@ -398,7 +689,7 @@ public class InventoryController : MonoBehaviour
         {
             if (items[i] != null)
             {
-                itemList.Add(new System.Tuple<int, WeaponData>(i, items[i]));
+                itemList.Add(new System.Tuple<int, ItemData>(i, items[i]));
             }
         }
         
@@ -445,17 +736,17 @@ public class InventoryController : MonoBehaviour
     }
     
     /// <summary>
-    /// Removes a specific weapon from the inventory.
+    /// Removes a specific item from the inventory.
     /// </summary>
-    /// <param name="weapon">The weapon to remove</param>
-    /// <returns>True if weapon was removed successfully, false otherwise</returns>
-    public bool RemoveItem(WeaponData weapon)
+    /// <param name="item">The item to remove</param>
+    /// <returns>True if item was removed successfully, false otherwise</returns>
+    public bool RemoveItem(ItemData item)
     {
-        if (weapon == null || items == null) return false;
+        if (item == null || items == null) return false;
         
         for (int i = 0; i < items.Length; i++)
         {
-            if (items[i] == weapon)
+            if (items[i] == item)
             {
                 return RemoveItemAt(i);
             }
