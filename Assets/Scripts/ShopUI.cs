@@ -29,7 +29,7 @@ public class ShopUI : MonoBehaviour
     [SerializeField] private int bowPrice = 1;
     [SerializeField] private int arrowBundlePrice = 1;
     [SerializeField] private int arrowsPerBundle = 20;
-    [SerializeField] private WeaponData bowWeaponData;
+    [SerializeField] private ItemData bowWeaponData;
     
     private CoinManager coinManager;
     private ArrowInventory arrowInventory;
@@ -216,7 +216,7 @@ public class ShopUI : MonoBehaviour
         
         if (bowWeaponData == null)
         {
-            Debug.LogWarning("ShopUI: Bow WeaponData not assigned!");
+            Debug.LogWarning("ShopUI: Bow ItemData not assigned!");
             return;
         }
         
@@ -346,7 +346,7 @@ public class ShopUI : MonoBehaviour
     /// <summary>
     /// Sets the bow weapon data reference.
     /// </summary>
-    public void SetBowWeaponData(WeaponData bowData)
+    public void SetBowWeaponData(ItemData bowData)
     {
         bowWeaponData = bowData;
     }
@@ -354,10 +354,10 @@ public class ShopUI : MonoBehaviour
     /// <summary>
     /// Gets all unequipped items from inventory with their sell prices.
     /// </summary>
-    private System.Collections.Generic.List<System.Tuple<WeaponData, int>> GetUnequippedItems()
+    private System.Collections.Generic.List<System.Tuple<ItemData, int>> GetUnequippedItems()
     {
-        System.Collections.Generic.List<System.Tuple<WeaponData, int>> unequippedItems = 
-            new System.Collections.Generic.List<System.Tuple<WeaponData, int>>();
+        System.Collections.Generic.List<System.Tuple<ItemData, int>> unequippedItems = 
+            new System.Collections.Generic.List<System.Tuple<ItemData, int>>();
         
         if (inventoryController == null)
         {
@@ -376,7 +376,7 @@ public class ShopUI : MonoBehaviour
         }
         
         // Get equipped weapon
-        WeaponData equippedWeapon = null;
+        ItemData equippedWeapon = null;
         if (inventoryController.WeaponCell != null)
         {
             equippedWeapon = inventoryController.WeaponCell.currentItem;
@@ -385,17 +385,17 @@ public class ShopUI : MonoBehaviour
         // Get all items from inventory
         var allItems = inventoryController.GetAllItems();
         
-        // Count occurrences of each weapon (to handle duplicates)
+        // Count occurrences of each item (to handle duplicates)
         // Only exclude ONE instance of the equipped weapon, not all instances
         bool equippedWeaponExcluded = false;
         
         foreach (var itemTuple in allItems)
         {
-            WeaponData weapon = itemTuple.Item2;
-            if (weapon != null)
+            ItemData item = itemTuple.Item2;
+            if (item != null)
             {
                 // If this is the equipped weapon, only exclude the first occurrence
-                if (equippedWeapon != null && weapon == equippedWeapon)
+                if (equippedWeapon != null && item == equippedWeapon)
                 {
                     if (!equippedWeaponExcluded)
                     {
@@ -406,8 +406,8 @@ public class ShopUI : MonoBehaviour
                     // If we've already excluded one, include the rest
                 }
                 
-                int sellPrice = weapon.sellPrice;
-                unequippedItems.Add(new System.Tuple<WeaponData, int>(weapon, sellPrice));
+                int sellPrice = item.sellPrice;
+                unequippedItems.Add(new System.Tuple<ItemData, int>(item, sellPrice));
             }
         }
         
@@ -513,10 +513,10 @@ public class ShopUI : MonoBehaviour
         
         foreach (var item in unequippedItems)
         {
-            WeaponData weapon = item.Item1;
+            ItemData itemData = item.Item1;
             int sellPrice = item.Item2;
             
-            if (inventoryController.RemoveItem(weapon))
+            if (inventoryController.RemoveItem(itemData))
             {
                 totalValue += sellPrice;
                 itemsSold++;

@@ -14,7 +14,6 @@ public class DeathManager : MonoBehaviour
     
     [Header("Options")]
     [SerializeField] private bool pauseGameOnDeath = true; // Có pause game khi chết không
-    [SerializeField] private string mainMenuSceneName = "Menu"; // Tên scene main menu
     
     private bool isDeathScreenActive = false;
     

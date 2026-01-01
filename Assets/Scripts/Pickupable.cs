@@ -5,7 +5,7 @@ using System.Collections;
 [RequireComponent(typeof(CircleCollider2D))]
 public class Pickupable : MonoBehaviour
 {
-    public WeaponData weaponData;
+    public ItemData itemData;
     [SerializeField] private float bobAmount = 0.1f;
     [SerializeField] private float bobSpeed = 2f;
     
@@ -20,9 +20,9 @@ public class Pickupable : MonoBehaviour
         var collider = GetComponent<CircleCollider2D>();
         collider.isTrigger = true;
         
-        if (weaponData != null && weaponData.icon != null)
+        if (itemData != null && itemData.icon != null)
         {
-            spriteRenderer.sprite = weaponData.icon;
+            spriteRenderer.sprite = itemData.icon;
         }
     }
 
@@ -39,11 +39,11 @@ public class Pickupable : MonoBehaviour
 
     void OnValidate()
     {
-        // Update sprite in editor when weaponData changes
-        if (weaponData != null && weaponData.icon != null)
+        // Update sprite in editor when itemData changes
+        if (itemData != null && itemData.icon != null)
         {
             var sr = GetComponent<SpriteRenderer>();
-            if (sr != null) sr.sprite = weaponData.icon;
+            if (sr != null) sr.sprite = itemData.icon;
         }
     }
 
@@ -125,7 +125,7 @@ public class Pickupable : MonoBehaviour
         // Now try to add the item
         if (InventoryController.Instance != null)
         {
-            if (InventoryController.Instance.AddItem(weaponData))
+            if (InventoryController.Instance.AddItem(itemData))
             {
                 Destroy(gameObject);
             }
