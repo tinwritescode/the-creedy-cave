@@ -103,7 +103,7 @@ public class ShopUI : MonoBehaviour
         
         if (sellAllUnequippedButton != null)
         {
-            sellAllUnequippedButton.onClick.AddListener(OnSellAllUnequippedClicked);
+            sellAllUnequippedButton.onClick.AddListener(OnSellItemClicked);
         }
         
         if (closeButton != null)
@@ -169,6 +169,21 @@ public class ShopUI : MonoBehaviour
         {
             shopPanel.SetActive(false);
         }
+        
+        // Exit sell mode if inventory is in sell mode
+        if (inventoryController == null)
+        {
+            inventoryController = InventoryController.Instance;
+            if (inventoryController == null)
+            {
+                inventoryController = FindFirstObjectByType<InventoryController>();
+            }
+        }
+        
+        if (inventoryController != null)
+        {
+            inventoryController.ExitSellMode();
+        }
     }
     
     /// <summary>
@@ -199,7 +214,7 @@ public class ShopUI : MonoBehaviour
         
         if (sellAllButtonText != null)
         {
-            sellAllButtonText.text = "Sell All Unequipped";
+            sellAllButtonText.text = "Sell Item";
         }
     }
     
@@ -415,39 +430,54 @@ public class ShopUI : MonoBehaviour
     }
     
     /// <summary>
-    /// Handles sell all unequipped button click.
-    /// Shows confirmation dialog with total value.
+    /// Handles sell item button click.
+    /// Enters sell mode in inventory.
     /// </summary>
-    private void OnSellAllUnequippedClicked()
+    private void OnSellItemClicked()
     {
-        if (coinManager == null)
+        // Hide shop panel
+        if (shopPanel != null)
         {
-            Debug.LogWarning("ShopUI: CoinManager not found!");
-            return;
+            shopPanel.SetActive(false);
         }
         
-        // Get unequipped items
-        var unequippedItems = GetUnequippedItems();
-        
-        if (unequippedItems.Count == 0)
+        // Find InventoryController if not already set
+        if (inventoryController == null)
         {
+            inventoryController = InventoryController.Instance;
+            if (inventoryController == null)
+            {
+                inventoryController = FindFirstObjectByType<InventoryController>();
+            }
+            if (inventoryController == null)
+            {
+                GameObject inventoryObj = GameObject.Find("Inventory");
+                if (inventoryObj != null)
+                {
+                    inventoryController = inventoryObj.GetComponent<InventoryController>();
+                }
+            }
+        }
+        
+        if (inventoryController == null)
+        {
+            Debug.LogWarning("ShopUI: InventoryController not found! Cannot enter sell mode.");
             if (MessageDisplay.Instance != null)
             {
-                MessageDisplay.Instance.ShowError("No unequipped items to sell!");
+                MessageDisplay.Instance.ShowError("Inventory not found!");
             }
-            Debug.Log("No unequipped items to sell!");
             return;
         }
         
-        // Calculate total value
-        int totalValue = 0;
-        foreach (var item in unequippedItems)
+        // Show inventory and enter sell mode
+        GameObject inventoryObj2 = inventoryController.gameObject;
+        if (inventoryObj2 != null)
         {
-            totalValue += item.Item2;
+            inventoryObj2.SetActive(true);
         }
         
-        // Show confirmation dialog
-        ShowConfirmationDialog(totalValue, unequippedItems.Count);
+        inventoryController.EnterSellMode();
+        Debug.Log("ShopUI: Entered sell mode in inventory.");
     }
     
     /// <summary>

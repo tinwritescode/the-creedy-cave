@@ -26,6 +26,8 @@ public class InventoryController : MonoBehaviour
     public GameObject useButtonGameObject;
     [Tooltip("Drop button GameObject (will get Button component from this)")]
     public GameObject dropButtonGameObject;
+    [Tooltip("Sell button GameObject (will get Button component from this)")]
+    public GameObject sellButtonGameObject;
     
     private CellController weaponCell;
     private CellController armorCell;
@@ -34,9 +36,11 @@ public class InventoryController : MonoBehaviour
     private CellController shoesCell;
     private Button useButton;
     private Button dropButton;
+    private Button sellButton;
 
     private CellController selectedCell;
     private ItemData[] items;
+    private bool isSellMode = false;
     
     // Public property to access weapon cell
     public CellController WeaponCell => weaponCell;
@@ -46,6 +50,9 @@ public class InventoryController : MonoBehaviour
         Instance = this;
         items = new ItemData[rows * columns];
         GenerateGrid();
+        
+        // Ensure we start in default state (not sell mode)
+        isSellMode = false;
         
         // Get CellController component from weaponCellGameObject (same as inventory cells)
         if (weaponCellGameObject != null)
@@ -233,6 +240,48 @@ public class InventoryController : MonoBehaviour
             dropButton.onClick.AddListener(OnDropButtonClicked);
             UpdateDropButtonState();
         }
+        
+        // Get Button component from sellButtonGameObject
+        if (sellButtonGameObject != null)
+        {
+            sellButton = sellButtonGameObject.GetComponent<Button>();
+            if (sellButton != null)
+            {
+                Debug.Log($"Found Sell button from sellButtonGameObject: {sellButtonGameObject.name}");
+            }
+            else
+            {
+                Debug.LogWarning($"sellButtonGameObject '{sellButtonGameObject.name}' does not have a Button component!");
+            }
+        }
+        else
+        {
+            // Auto-find as fallback
+            Button[] buttons = GetComponentsInChildren<Button>();
+            foreach (Button btn in buttons)
+            {
+                if (btn.name.ToLower().Contains("sell"))
+                {
+                    sellButton = btn;
+                    Debug.Log($"Auto-found Sell button in children: {btn.name}");
+                    break;
+                }
+            }
+            
+            if (sellButton == null)
+            {
+                Debug.LogWarning("Sell button not found. Please use Tools > Setup Inventory Sell Button to create it.");
+            }
+        }
+        
+        // Setup Sell button
+        if (sellButton != null)
+        {
+            sellButton.onClick.AddListener(OnSellButtonClicked);
+            UpdateSellButtonState();
+            // Initially hide sell button (only shown in sell mode)
+            sellButton.gameObject.SetActive(false);
+        }
     }
 
     void GenerateGrid()
@@ -257,6 +306,14 @@ public class InventoryController : MonoBehaviour
 
     public void SelectCell(CellController cell)
     {
+        // Check if this is an equipment slot cell with an item - unequip it
+        if (IsEquipmentSlotCell(cell) && cell.currentItem != null)
+        {
+            UnequipItem(cell);
+            // Don't select equipment slots, just unequip
+            return;
+        }
+        
         if (selectedCell == cell)
         {
             DeselectCell();
@@ -269,9 +326,63 @@ public class InventoryController : MonoBehaviour
         selectedCell = cell;
         selectedCell.SetHighlight(true);
         
-        // Update Use and Drop button states when selection changes
+        // In sell mode, check if item is equipped and prevent selection
+        if (isSellMode && selectedCell != null && selectedCell.currentItem != null)
+        {
+            if (IsItemEquipped(selectedCell.currentItem))
+            {
+                // Deselect equipped items in sell mode
+                DeselectCell();
+                if (MessageDisplay.Instance != null)
+                {
+                    MessageDisplay.Instance.ShowError("Cannot sell equipped items!");
+                }
+                return;
+            }
+        }
+        
+        // Update button states when selection changes
         UpdateUseButtonState();
         UpdateDropButtonState();
+        UpdateSellButtonState();
+    }
+    
+    /// <summary>
+    /// Checks if a cell is an equipment slot (weapon, armor, hat, gloves, shoes).
+    /// </summary>
+    private bool IsEquipmentSlotCell(CellController cell)
+    {
+        if (cell == null) return false;
+        
+        // Check against equipment cell references
+        if (cell == weaponCell || cell == armorCell || cell == hatCell || cell == glovesCell || cell == shoesCell)
+        {
+            return true;
+        }
+        
+        // Also check by comparing with equipment cell GameObjects (in case cells weren't initialized)
+        if (weaponCellGameObject != null && cell.gameObject == weaponCellGameObject)
+        {
+            return true;
+        }
+        if (armorCellGameObject != null && cell.gameObject == armorCellGameObject)
+        {
+            return true;
+        }
+        if (hatCellGameObject != null && cell.gameObject == hatCellGameObject)
+        {
+            return true;
+        }
+        if (glovesCellGameObject != null && cell.gameObject == glovesCellGameObject)
+        {
+            return true;
+        }
+        if (shoesCellGameObject != null && cell.gameObject == shoesCellGameObject)
+        {
+            return true;
+        }
+        
+        return false;
     }
 
     public void DeselectCell()
@@ -280,16 +391,40 @@ public class InventoryController : MonoBehaviour
             selectedCell.SetHighlight(false);
         selectedCell = null;
         
-        // Update Use and Drop button states when deselected
+        // Update button states when deselected
         UpdateUseButtonState();
         UpdateDropButtonState();
+        UpdateSellButtonState();
     }
 
     public void CloseInventory()
     {
         Debug.Log("CloseInventory called");
         DeselectCell();
+        ExitSellMode(); // Exit sell mode when closing inventory - reset to default state
         gameObject.SetActive(false);
+    }
+    
+    void OnEnable()
+    {
+        // Ensure inventory opens in default state (not sell mode)
+        // This is called when the GameObject becomes active
+        if (isSellMode)
+        {
+            ExitSellMode();
+        }
+    }
+    
+    void OnDisable()
+    {
+        // Reset to default state when inventory is disabled (closed)
+        // This ensures state is reset even if closed via SetActive(false) directly
+        // or when toggled via GameController
+        if (isSellMode)
+        {
+            ExitSellMode();
+        }
+        DeselectCell();
     }
 
     public bool AddItem(ItemData item)
@@ -523,7 +658,38 @@ public class InventoryController : MonoBehaviour
             }
         }
         
-        // Equip the item (using SetItem like inventory cells)
+        // Remove item from inventory first (this frees up a slot for the old item if needed)
+        if (!RemoveItem(itemToUse))
+        {
+            Debug.LogWarning($"Failed to remove {itemToUse.itemName} from inventory! Item may not be in inventory.");
+            return;
+        }
+        
+        // Check if equipment slot already has an item - unequip it (add back to inventory)
+        ItemData oldItem = null;
+        if (targetCell.currentItem != null)
+        {
+            oldItem = targetCell.currentItem;
+            // Clear the slot temporarily
+            targetCell.ClearItem();
+            
+            // Add old item back to inventory (should work since we just freed a slot)
+            if (!AddItem(oldItem))
+            {
+                // This shouldn't happen since we just freed a slot, but handle it
+                Debug.LogWarning($"Failed to add {oldItem.itemName} back to inventory after unequipping!");
+                // Restore old item to slot and add new item back to inventory
+                targetCell.SetItem(oldItem);
+                AddItem(itemToUse); // Try to restore
+                if (MessageDisplay.Instance != null)
+                {
+                    MessageDisplay.Instance.ShowError("Failed to unequip current item!");
+                }
+                return;
+            }
+        }
+        
+        // Equip the new item to the slot
         targetCell.SetItem(itemToUse);
         
         // Update player stats if PlayerHealth exists
@@ -544,6 +710,9 @@ public class InventoryController : MonoBehaviour
             //     UpdatePlayerDefenseStats(playerHealth, itemToUse);
             // }
         }
+        
+        // Deselect the cell since item is now equipped
+        DeselectCell();
         
         Debug.Log($"Equipped {itemToUse.itemType}: {itemToUse.itemName}");
     }
@@ -626,11 +795,71 @@ public class InventoryController : MonoBehaviour
     }
     
     /// <summary>
+    /// Unequips an item from an equipment slot and returns it to inventory.
+    /// </summary>
+    /// <param name="equipmentCell">The equipment cell to unequip from</param>
+    /// <param name="updateStats">Whether to update player stats after unequipping (default: true)</param>
+    private void UnequipItem(CellController equipmentCell, bool updateStats = true)
+    {
+        if (equipmentCell == null || equipmentCell.currentItem == null)
+        {
+            return;
+        }
+        
+        ItemData itemToUnequip = equipmentCell.currentItem;
+        
+        // Add item back to inventory
+        if (AddItem(itemToUnequip))
+        {
+            // Clear the equipment slot
+            equipmentCell.ClearItem();
+            
+            // Update player stats if needed
+            if (updateStats)
+            {
+                PlayerHealth playerHealth = FindFirstObjectByType<PlayerHealth>();
+                if (playerHealth != null)
+                {
+                    // Reset stats based on item type
+                    if (itemToUnequip.itemType == ItemData.ItemType.Weapon)
+                    {
+                        // Reset attack damage to default since weapon is unequipped
+                        float defaultAttack = 150f; // Default attack damage
+                        playerHealth.SetAttackDamage(defaultAttack);
+                        Debug.Log($"Reset player attack damage to default ({defaultAttack}) after unequipping weapon.");
+                    }
+                    // Defense stats are calculated dynamically from equipped items, so no need to reset here
+                }
+            }
+            
+            Debug.Log($"Unequipped {itemToUnequip.itemType}: {itemToUnequip.itemName}");
+        }
+        else
+        {
+            Debug.LogWarning($"Failed to add {itemToUnequip.itemName} back to inventory! Inventory might be full.");
+            if (MessageDisplay.Instance != null)
+            {
+                MessageDisplay.Instance.ShowError("Inventory is full! Cannot unequip item.");
+            }
+        }
+    }
+    
+    /// <summary>
     /// Updates the Use button's interactable state based on selection.
     /// </summary>
     private void UpdateUseButtonState()
     {
         if (useButton == null) return;
+        
+        // Hide Use button in sell mode
+        if (isSellMode)
+        {
+            useButton.gameObject.SetActive(false);
+            return;
+        }
+        
+        // Show Use button in normal mode
+        useButton.gameObject.SetActive(true);
         
         // Enable button only if a weapon is selected
         bool hasSelectedWeapon = selectedCell != null && selectedCell.currentItem != null;
@@ -643,6 +872,16 @@ public class InventoryController : MonoBehaviour
     private void UpdateDropButtonState()
     {
         if (dropButton == null) return;
+        
+        // Hide Drop button in sell mode
+        if (isSellMode)
+        {
+            dropButton.gameObject.SetActive(false);
+            return;
+        }
+        
+        // Show Drop button in normal mode
+        dropButton.gameObject.SetActive(true);
         
         // Enable button only if a weapon is selected
         bool hasSelectedWeapon = selectedCell != null && selectedCell.currentItem != null;
@@ -753,6 +992,205 @@ public class InventoryController : MonoBehaviour
         }
         
         return false;
+    }
+    
+    /// <summary>
+    /// Enters sell mode: hides Use/Drop buttons and shows Sell button.
+    /// </summary>
+    public void EnterSellMode()
+    {
+        isSellMode = true;
+        
+        // Hide Use and Drop buttons
+        if (useButton != null)
+        {
+            useButton.gameObject.SetActive(false);
+        }
+        if (dropButton != null)
+        {
+            dropButton.gameObject.SetActive(false);
+        }
+        
+        // Show Sell button
+        if (sellButton != null)
+        {
+            sellButton.gameObject.SetActive(true);
+        }
+        
+        // Update button states
+        UpdateSellButtonState();
+        
+        // Deselect any selected cell to reset state
+        DeselectCell();
+        
+        Debug.Log("InventoryController: Entered sell mode.");
+    }
+    
+    /// <summary>
+    /// Exits sell mode: shows Use/Drop buttons and hides Sell button.
+    /// </summary>
+    public void ExitSellMode()
+    {
+        isSellMode = false;
+        
+        // Show Use and Drop buttons
+        if (useButton != null)
+        {
+            useButton.gameObject.SetActive(true);
+        }
+        if (dropButton != null)
+        {
+            dropButton.gameObject.SetActive(true);
+        }
+        
+        // Hide Sell button
+        if (sellButton != null)
+        {
+            sellButton.gameObject.SetActive(false);
+        }
+        
+        // Update button states
+        UpdateUseButtonState();
+        UpdateDropButtonState();
+        
+        // Deselect any selected cell
+        DeselectCell();
+        
+        Debug.Log("InventoryController: Exited sell mode.");
+    }
+    
+    /// <summary>
+    /// Checks if an item is currently equipped in any equipment slot.
+    /// </summary>
+    private bool IsItemEquipped(ItemData item)
+    {
+        if (item == null) return false;
+        
+        // Check weapon slot
+        if (weaponCell != null && weaponCell.currentItem == item)
+        {
+            return true;
+        }
+        
+        // Check armor slot
+        if (armorCell != null && armorCell.currentItem == item)
+        {
+            return true;
+        }
+        
+        // Check hat slot
+        if (hatCell != null && hatCell.currentItem == item)
+        {
+            return true;
+        }
+        
+        // Check gloves slot
+        if (glovesCell != null && glovesCell.currentItem == item)
+        {
+            return true;
+        }
+        
+        // Check shoes slot
+        if (shoesCell != null && shoesCell.currentItem == item)
+        {
+            return true;
+        }
+        
+        return false;
+    }
+    
+    /// <summary>
+    /// Updates the Sell button's interactable state based on selection.
+    /// </summary>
+    private void UpdateSellButtonState()
+    {
+        if (sellButton == null) return;
+        
+        // Only enable if in sell mode and item is selected and not equipped
+        if (isSellMode)
+        {
+            bool hasSelectedItem = selectedCell != null && selectedCell.currentItem != null;
+            bool isEquipped = hasSelectedItem && IsItemEquipped(selectedCell.currentItem);
+            sellButton.interactable = hasSelectedItem && !isEquipped;
+        }
+        else
+        {
+            sellButton.interactable = false;
+        }
+    }
+    
+    /// <summary>
+    /// Called when the Sell button is clicked.
+    /// Sells the selected item and adds coins.
+    /// </summary>
+    public void OnSellButtonClicked()
+    {
+        if (selectedCell == null || selectedCell.currentItem == null)
+        {
+            Debug.LogWarning("No item selected to sell!");
+            return;
+        }
+        
+        if (!isSellMode)
+        {
+            Debug.LogWarning("Not in sell mode!");
+            return;
+        }
+        
+        ItemData itemToSell = selectedCell.currentItem;
+        
+        // Check if item is equipped
+        if (IsItemEquipped(itemToSell))
+        {
+            if (MessageDisplay.Instance != null)
+            {
+                MessageDisplay.Instance.ShowError("Cannot sell equipped items!");
+            }
+            Debug.LogWarning("Cannot sell equipped items!");
+            return;
+        }
+        
+        // Get sell price
+        int sellPrice = itemToSell.sellPrice;
+        
+        // Find CoinManager
+        CoinManager coinManager = FindFirstObjectByType<CoinManager>();
+        if (coinManager == null)
+        {
+            Debug.LogWarning("CoinManager not found! Cannot sell item.");
+            if (MessageDisplay.Instance != null)
+            {
+                MessageDisplay.Instance.ShowError("CoinManager not found!");
+            }
+            return;
+        }
+        
+        // Remove item from inventory
+        if (RemoveItem(itemToSell))
+        {
+            // Add coins (call CollectCoin multiple times for the sell price)
+            for (int i = 0; i < sellPrice; i++)
+            {
+                coinManager.CollectCoin();
+            }
+            
+            // Show message
+            if (MessageDisplay.Instance != null)
+            {
+                string message = $"Sold {itemToSell.itemName} for {sellPrice} gold (+{sellPrice} gold)";
+                MessageDisplay.Instance.ShowMessage(message, 5f);
+            }
+            
+            Debug.Log($"Sold {itemToSell.itemName} for {sellPrice} gold!");
+        }
+        else
+        {
+            Debug.LogWarning($"Failed to remove item {itemToSell.itemName} from inventory!");
+            if (MessageDisplay.Instance != null)
+            {
+                MessageDisplay.Instance.ShowError("Failed to sell item!");
+            }
+        }
     }
 }
 
