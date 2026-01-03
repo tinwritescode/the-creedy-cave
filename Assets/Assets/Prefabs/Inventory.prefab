@@ -686,6 +686,7 @@ MonoBehaviour:
   useButtonGameObject: {fileID: 5199517719055551147}
   dropButtonGameObject: {fileID: 5443747221133414214}
   sellButtonGameObject: {fileID: 1959017873484404943}
+  initialWeapon: {fileID: 11400000, guid: 71d832bae62954ff48ebe85c64c4f22d, type: 2}
 --- !u!1001 &2055760777336193825
 PrefabInstance:
   m_ObjectHideFlags: 0

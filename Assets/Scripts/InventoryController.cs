@@ -33,6 +33,10 @@ public class InventoryController : MonoBehaviour
     [Tooltip("Sell button GameObject (will get Button component from this)")]
     public GameObject sellButtonGameObject;
     
+    [Header("Initial Equipment")]
+    [Tooltip("Weapon to equip on initialization (optional - leave empty for no initial weapon)")]
+    public ItemData initialWeapon;
+    
     private CellController weaponCell;
     private CellController armorCell;
     private CellController hatCell;
@@ -288,6 +292,15 @@ public class InventoryController : MonoBehaviour
         }
     }
 
+    void Start()
+    {
+        // Equip initial weapon if assigned
+        if (initialWeapon != null)
+        {
+            EquipWeaponDirectly(initialWeapon);
+        }
+    }
+
     void GenerateGrid()
     {
         // Prevent duplicate cells if grid already exists
@@ -416,6 +429,57 @@ public class InventoryController : MonoBehaviour
         if (isSellMode)
         {
             ExitSellMode();
+        }
+        
+        // Sync player stats with equipped weapon when inventory opens
+        SyncEquippedWeaponStats();
+    }
+    
+    /// <summary>
+    /// Syncs player stats with the currently equipped weapon in the weapon cell.
+    /// This ensures stats are correct when inventory opens.
+    /// </summary>
+    private void SyncEquippedWeaponStats()
+    {
+        // Ensure weaponCell is initialized
+        if (weaponCell == null)
+        {
+            if (weaponCellGameObject != null)
+            {
+                weaponCell = weaponCellGameObject.GetComponent<CellController>();
+            }
+            else
+            {
+                GameObject weaponCellObj = GameObject.Find("WeaponCell");
+                if (weaponCellObj != null)
+                {
+                    weaponCell = weaponCellObj.GetComponent<CellController>();
+                }
+            }
+        }
+        
+        // If weapon cell has a weapon, sync stats
+        if (weaponCell != null && weaponCell.currentItem != null)
+        {
+            ItemData equippedWeapon = weaponCell.currentItem;
+            if (equippedWeapon.itemType == ItemData.ItemType.Weapon)
+            {
+                PlayerHealth playerHealth = FindFirstObjectByType<PlayerHealth>();
+                if (playerHealth != null)
+                {
+                    UpdatePlayerWeaponStats(playerHealth, equippedWeapon);
+                }
+            }
+        }
+        else if (weaponCell != null && weaponCell.currentItem == null)
+        {
+            // No weapon equipped, set to default
+            PlayerHealth playerHealth = FindFirstObjectByType<PlayerHealth>();
+            if (playerHealth != null)
+            {
+                float defaultAttack = 50f;
+                playerHealth.SetAttackDamage(defaultAttack);
+            }
         }
     }
     
@@ -792,6 +856,74 @@ public class InventoryController : MonoBehaviour
     }
     
     /// <summary>
+    /// Equips a weapon directly to the weapon slot (used for initial equipment).
+    /// This method equips the weapon without requiring it to be in the inventory first.
+    /// </summary>
+    /// <param name="weapon">The weapon ItemData to equip</param>
+    private void EquipWeaponDirectly(ItemData weapon)
+    {
+        if (weapon == null)
+        {
+            Debug.LogWarning("Cannot equip null weapon!");
+            return;
+        }
+        
+        if (weapon.itemType != ItemData.ItemType.Weapon)
+        {
+            Debug.LogWarning($"Cannot equip {weapon.itemName}: item is not a weapon (type: {weapon.itemType})");
+            return;
+        }
+        
+        // Ensure weaponCell is initialized
+        if (weaponCell == null)
+        {
+            if (weaponCellGameObject != null)
+            {
+                weaponCell = weaponCellGameObject.GetComponent<CellController>();
+            }
+            else
+            {
+                GameObject weaponCellObj = GameObject.Find("WeaponCell");
+                if (weaponCellObj != null)
+                {
+                    weaponCell = weaponCellObj.GetComponent<CellController>();
+                }
+            }
+            
+            if (weaponCell == null)
+            {
+                Debug.LogError("Cannot equip initial weapon: WeaponCell is not assigned!");
+                return;
+            }
+        }
+        
+        // Check if there's already a weapon equipped - unequip it first
+        if (weaponCell.currentItem != null)
+        {
+            ItemData oldWeapon = weaponCell.currentItem;
+            weaponCell.ClearItem();
+            
+            // Try to add old weapon to inventory, but don't fail if inventory is full
+            if (!AddItem(oldWeapon))
+            {
+                Debug.LogWarning($"Could not add old weapon {oldWeapon.itemName} to inventory. It will be lost.");
+            }
+        }
+        
+        // Equip the new weapon
+        weaponCell.SetItem(weapon);
+        
+        // Update player stats
+        PlayerHealth playerHealth = FindFirstObjectByType<PlayerHealth>();
+        if (playerHealth != null)
+        {
+            UpdatePlayerWeaponStats(playerHealth, weapon);
+        }
+        
+        Debug.Log($"Equipped initial weapon: {weapon.itemName}");
+    }
+    
+    /// <summary>
     /// Unequips an item from an equipment slot and returns it to inventory.
     /// </summary>
     /// <param name="equipmentCell">The equipment cell to unequip from</param>
@@ -821,7 +953,7 @@ public class InventoryController : MonoBehaviour
                     if (itemToUnequip.itemType == ItemData.ItemType.Weapon)
                     {
                         // Reset attack damage to default since weapon is unequipped
-                        float defaultAttack = 150f; // Default attack damage
+                        float defaultAttack = 50f; // Default attack damage
                         playerHealth.SetAttackDamage(defaultAttack);
                         Debug.Log($"Reset player attack damage to default ({defaultAttack}) after unequipping weapon.");
                     }

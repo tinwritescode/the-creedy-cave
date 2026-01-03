@@ -15,7 +15,7 @@ MonoBehaviour:
   itemName: Sword5
   icon: {fileID: -4898731100839214754, guid: ab19829ef0c64487eb060e96aba175f0, type: 3}
   itemType: 0
-  damage: 100
+  damage: 500
   attackSpeed: 2
   defense: 0
   sellPrice: 1
